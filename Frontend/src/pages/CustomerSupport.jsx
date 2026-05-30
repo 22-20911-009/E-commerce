@@ -6,7 +6,7 @@ import storeData from "../data/shopmart.json";
 const getContext = (query) => {
     const q = query.toLowerCase();
     const has = (...words) => words.some((w) => q.includes(w));
-    const { store, currentOffers, categories, policies, sellerProgram, orderTracking, faq } = storeData;
+    const { store, currentOffers, categories, policies, sellerProgram, orderTracking, faq, productInfo } = storeData;
 
     const parts = [];
 
@@ -26,6 +26,55 @@ const getContext = (query) => {
         parts.push(
             "CATEGORIES:\n" +
             categories.map((c) => `- ${c.name}: ${c.topProducts.join(", ")}`).join("\n")
+        );
+    }
+
+    if (has("jean", "denim", "pant", "trouser")) {
+        const j = productInfo.jeans;
+        parts.push(
+            `JEANS: ${j.description}\nFits: ${j.fits.join(", ")}\nMaterials: ${j.materials.join(", ")}\nSizes - Men: ${j.sizes.men.join(", ")} | Women: ${j.sizes.women.join(", ")}\nColors: ${j.colors.join(", ")}\nPrice: ${j.priceRange}\nCare: ${j.careTips}\nTip: ${j.buyingTips}`
+        );
+    }
+
+    if (has("bag", "handbag", "backpack", "tote", "purse", "clutch", "laptop bag", "duffel")) {
+        const b = productInfo.bags;
+        parts.push(
+            `BAGS: ${b.description}\nTypes: ${b.types.join(", ")}\nMaterials: ${b.materials.join(", ")}\nFeatures: ${b.features.join(", ")}\nPrice: ${b.priceRange}\nCare: ${b.careTips}\nTip: ${b.buyingTips}`
+        );
+    }
+
+    if (has("glass", "sunglass", "eyewear", "spectacle", "frame", "lens", "goggle")) {
+        const g = productInfo.glasses;
+        parts.push(
+            `GLASSES: ${g.description}\nTypes: ${g.types.join(", ")}\nFrame Styles: ${g.frameStyles.join(", ")}\nFrame Materials: ${g.frameMaterials.join(", ")}\nLens: ${g.lensMaterials.join(", ")}\nColors: ${g.colors.join(", ")}\nPrice: ${g.priceRange}\nCare: ${g.careTips}\nTip: ${g.buyingTips}`
+        );
+    }
+
+    if (has("t-shirt", "tshirt", "t shirt", "polo", "graphic tee", "tee", "crew neck", "v-neck")) {
+        const t = productInfo.tshirts;
+        parts.push(
+            `T-SHIRTS: ${t.description}\nTypes: ${t.types.join(", ")}\nMaterials: ${t.materials.join(", ")}\nSizes - Men: ${t.sizes.men.join(", ")} | Women: ${t.sizes.women.join(", ")} | Kids: ${t.sizes.kids.join(", ")}\nColors: ${t.colors.join(", ")}\nPrice: ${t.priceRange}\nCare: ${t.careTips}\nTip: ${t.buyingTips}`
+        );
+    }
+
+    if (has("shoe", "sneaker", "footwear", "heel", "sandal", "boot", "loafer", "slipper", "khussa")) {
+        const s = productInfo.shoes;
+        parts.push(
+            `SHOES: ${s.description}\nTypes: ${s.types.join(", ")}\nMaterials: ${s.materials.join(", ")}\nSizes - Men: ${s.sizes.men.join(", ")} | Women: ${s.sizes.women.join(", ")} | Kids: ${s.sizes.kids}\nPrice: ${s.priceRange}\nCare: ${s.careTips}\nTip: ${s.buyingTips}`
+        );
+    }
+
+    if (has("jacket", "coat", "puffer", "windbreaker", "bomber", "hoodie", "fleece", "leather jacket")) {
+        const jk = productInfo.jackets;
+        parts.push(
+            `JACKETS: ${jk.description}\nTypes: ${jk.types.join(", ")}\nMaterials: ${jk.materials.join(", ")}\nSizes: ${jk.sizes.join(", ")}\nColors: ${jk.colors.join(", ")}\nPrice: ${jk.priceRange}\nCare: ${jk.careTips}\nTip: ${jk.buyingTips}`
+        );
+    }
+
+    if (has("suit", "shalwar", "kurta", "sherwani", "lawn", "kameez", "formal wear", "wedding wear", "3-piece", "2-piece")) {
+        const su = productInfo.suits;
+        parts.push(
+            `SUITS: ${su.description}\nMen's Formal Types: ${su.types.mensFormal.join(", ")}\nMen's Traditional Types: ${su.types.mensTraditional.join(", ")}\nWomen's Types: ${su.types.womens.join(", ")}\nMaterials - Formal: ${su.materials.formal.join(", ")} | Traditional: ${su.materials.traditional.join(", ")}\nSizes - Men's Formal: ${su.sizes.mensFormal.join(", ")} | Women's: ${su.sizes.womens.join(", ")}\nPrices - Men's Formal: ${su.priceRange.mensFormal} | Men's Traditional: ${su.priceRange.mensTraditional} | Women's Lawn: ${su.priceRange.womensLawn} | Women's Embroidered: ${su.priceRange.womensEmbroidered}\nCare: ${su.careTips}\nTip: ${su.buyingTips}`
         );
     }
 
@@ -78,7 +127,7 @@ const getContext = (query) => {
 };
 
 const buildSystemPrompt = (context) =>
-    `You are ShopBot, the virtual assistant for ShopMart. Answer using ONLY the data below. If not in the data, say you don't have that info and give the support contact. Never answer off-topic questions. Be concise.\n\nDATA:\n${context}`;
+    `You are ShopBot, the virtual assistant for ShopMart. Answer using ONLY the data below. If not in the data, say you don't have that info and give the support contact. Never answer off-topic questions. Be concise.\nIMPORTANT RULES:\n- All offers and products listed in the data are current and active today. Never say you don't know today's date — just present the listed offers as the current ones.\n- For comparison or "which is better" questions, present the relevant facts from the data clearly so the user can decide. Do not refuse to answer.\n- Always extract and use any relevant information from the DATA section below to answer the user.\n\nDATA:\n${context}`;
 
 
 const BANNED_WORDS = ["sex", "politics", "violence", "religion"];
@@ -87,7 +136,7 @@ const QUESTIONS = [
     "What is the best sale offer on ShopMart today?",
     "How can I start selling on ShopMart?",
     "What are the popular things on ShopMart?",
-    "Is cash on delivery better than online payment?",
+    "What payment methods does ShopMart accept?",
 ];
 
 const CustomerSupport = () => {
