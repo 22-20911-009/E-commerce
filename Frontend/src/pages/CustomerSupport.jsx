@@ -3,132 +3,134 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Bot, Sparkles } from "lucide-react";
 import storeData from "../data/shopmart.json";
 
-const getContext = (query) => {
-    const q = query.toLowerCase();
-    const has = (...words) => words.some((w) => q.includes(w));
-    const { store, currentOffers, categories, policies, sellerProgram, orderTracking, faq, productInfo } = storeData;
+// ─── Tool Definitions (sent to LLM so it can decide what to call) ────────────
 
-    const parts = [];
+const TOOLS = [
+    {
+        type: "function",
+        function: {
+            name: "get_offers",
+            description: "Get current sales, promotions and discount codes",
+            parameters: { type: "object", properties: {} },
+        },
+    },
+    {
+        type: "function",
+        function: {
+            name: "get_categories",
+            description: "Get available product categories",
+            parameters: { type: "object", properties: {} },
+        },
+    },
+    {
+        type: "function",
+        function: {
+            name: "get_product_info",
+            description: "Get details for a product category: types, sizes, price, materials",
+            parameters: {
+                type: "object",
+                properties: {
+                    category: {
+                        type: "string",
+                        enum: ["jeans", "bags", "glasses", "tshirts", "shoes", "jackets", "suits"],
+                    },
+                },
+                required: ["category"],
+            },
+        },
+    },
+    {
+        type: "function",
+        function: {
+            name: "get_policy",
+            description: "Get store policy for returns, shipping, payments, or cancellation",
+            parameters: {
+                type: "object",
+                properties: {
+                    type: {
+                        type: "string",
+                        enum: ["returns", "shipping", "payments", "cancellation"],
+                    },
+                },
+                required: ["type"],
+            },
+        },
+    },
+    {
+        type: "function",
+        function: {
+            name: "get_order_tracking",
+            description: "Get order tracking info and status meanings",
+            parameters: { type: "object", properties: {} },
+        },
+    },
+    {
+        type: "function",
+        function: {
+            name: "get_seller_info",
+            description: "Get seller registration, commission and payout info",
+            parameters: { type: "object", properties: {} },
+        },
+    },
+    {
+        type: "function",
+        function: {
+            name: "get_faq",
+            description: "Get FAQs. Use as fallback when no other tool fits",
+            parameters: { type: "object", properties: {} },
+        },
+    },
+    {
+        type: "function",
+        function: {
+            name: "get_store_contact",
+            description: "Get owner name, phone, email and working hours",
+            parameters: { type: "object", properties: {} },
+        },
+    },
+];
 
-    // Store contact — always a short anchor
-    parts.push(`Support: ${store.contact.supportAgent} ${store.contact.phone} | Hours: ${store.contact.workingHours}`);
+// ─── Tool Executor (runs the tool the LLM requested) ─────────────────────────
 
-    if (has("offer", "sale", "discount", "deal", "promo", "coupon", "code", "today", "best")) {
-        parts.push(
-            "OFFERS:\n" +
-            currentOffers.map((o) =>
-                `- ${o.title}: ${o.description}${o.code ? ` (Code: ${o.code})` : ""}${o.validUntil ? ` | Valid: ${o.validUntil}` : ""}`
-            ).join("\n")
-        );
+const executeTool = (name, args) => {
+    switch (name) {
+        case "get_offers":
+            return JSON.stringify(storeData.currentOffers);
+        case "get_categories":
+            return JSON.stringify({
+                availableCategories: ["Jeans", "Bags", "Glasses", "T-Shirts", "Shoes", "Jackets", "Suits"],
+                note: "ShopMart specialises in fashion clothing and accessories across these 7 categories.",
+            });
+        case "get_product_info":
+            return JSON.stringify(storeData.productInfo[args.category] ?? "Category not found");
+        case "get_policy": {
+            const policyKey = args.type === "payment" ? "payments" : args.type;
+            return JSON.stringify(storeData.policies[policyKey] ?? "Policy not found");
+        }
+        case "get_order_tracking":
+            return JSON.stringify(storeData.orderTracking);
+        case "get_seller_info":
+            return JSON.stringify(storeData.sellerProgram);
+        case "get_faq":
+            return JSON.stringify(storeData.faq);
+        case "get_store_contact":
+            return JSON.stringify(storeData.store.contact);
+        default:
+            return "Tool not found";
     }
-
-    if (has("product", "popular", "trending", "category", "thing", "buy", "item")) {
-        parts.push(
-            "CATEGORIES:\n" +
-            categories.map((c) => `- ${c.name}: ${c.topProducts.join(", ")}`).join("\n")
-        );
-    }
-
-    if (has("jean", "denim", "pant", "trouser")) {
-        const j = productInfo.jeans;
-        parts.push(
-            `JEANS: ${j.description}\nFits: ${j.fits.join(", ")}\nMaterials: ${j.materials.join(", ")}\nSizes - Men: ${j.sizes.men.join(", ")} | Women: ${j.sizes.women.join(", ")}\nColors: ${j.colors.join(", ")}\nPrice: ${j.priceRange}\nCare: ${j.careTips}\nTip: ${j.buyingTips}`
-        );
-    }
-
-    if (has("bag", "handbag", "backpack", "tote", "purse", "clutch", "laptop bag", "duffel")) {
-        const b = productInfo.bags;
-        parts.push(
-            `BAGS: ${b.description}\nTypes: ${b.types.join(", ")}\nMaterials: ${b.materials.join(", ")}\nFeatures: ${b.features.join(", ")}\nPrice: ${b.priceRange}\nCare: ${b.careTips}\nTip: ${b.buyingTips}`
-        );
-    }
-
-    if (has("glass", "sunglass", "eyewear", "spectacle", "frame", "lens", "goggle")) {
-        const g = productInfo.glasses;
-        parts.push(
-            `GLASSES: ${g.description}\nTypes: ${g.types.join(", ")}\nFrame Styles: ${g.frameStyles.join(", ")}\nFrame Materials: ${g.frameMaterials.join(", ")}\nLens: ${g.lensMaterials.join(", ")}\nColors: ${g.colors.join(", ")}\nPrice: ${g.priceRange}\nCare: ${g.careTips}\nTip: ${g.buyingTips}`
-        );
-    }
-
-    if (has("t-shirt", "tshirt", "t shirt", "polo", "graphic tee", "tee", "crew neck", "v-neck")) {
-        const t = productInfo.tshirts;
-        parts.push(
-            `T-SHIRTS: ${t.description}\nTypes: ${t.types.join(", ")}\nMaterials: ${t.materials.join(", ")}\nSizes - Men: ${t.sizes.men.join(", ")} | Women: ${t.sizes.women.join(", ")} | Kids: ${t.sizes.kids.join(", ")}\nColors: ${t.colors.join(", ")}\nPrice: ${t.priceRange}\nCare: ${t.careTips}\nTip: ${t.buyingTips}`
-        );
-    }
-
-    if (has("shoe", "sneaker", "footwear", "heel", "sandal", "boot", "loafer", "slipper", "khussa")) {
-        const s = productInfo.shoes;
-        parts.push(
-            `SHOES: ${s.description}\nTypes: ${s.types.join(", ")}\nMaterials: ${s.materials.join(", ")}\nSizes - Men: ${s.sizes.men.join(", ")} | Women: ${s.sizes.women.join(", ")} | Kids: ${s.sizes.kids}\nPrice: ${s.priceRange}\nCare: ${s.careTips}\nTip: ${s.buyingTips}`
-        );
-    }
-
-    if (has("jacket", "coat", "puffer", "windbreaker", "bomber", "hoodie", "fleece", "leather jacket")) {
-        const jk = productInfo.jackets;
-        parts.push(
-            `JACKETS: ${jk.description}\nTypes: ${jk.types.join(", ")}\nMaterials: ${jk.materials.join(", ")}\nSizes: ${jk.sizes.join(", ")}\nColors: ${jk.colors.join(", ")}\nPrice: ${jk.priceRange}\nCare: ${jk.careTips}\nTip: ${jk.buyingTips}`
-        );
-    }
-
-    if (has("suit", "shalwar", "kurta", "sherwani", "lawn", "kameez", "formal wear", "wedding wear", "3-piece", "2-piece")) {
-        const su = productInfo.suits;
-        parts.push(
-            `SUITS: ${su.description}\nMen's Formal Types: ${su.types.mensFormal.join(", ")}\nMen's Traditional Types: ${su.types.mensTraditional.join(", ")}\nWomen's Types: ${su.types.womens.join(", ")}\nMaterials - Formal: ${su.materials.formal.join(", ")} | Traditional: ${su.materials.traditional.join(", ")}\nSizes - Men's Formal: ${su.sizes.mensFormal.join(", ")} | Women's: ${su.sizes.womens.join(", ")}\nPrices - Men's Formal: ${su.priceRange.mensFormal} | Men's Traditional: ${su.priceRange.mensTraditional} | Women's Lawn: ${su.priceRange.womensLawn} | Women's Embroidered: ${su.priceRange.womensEmbroidered}\nCare: ${su.careTips}\nTip: ${su.buyingTips}`
-        );
-    }
-
-    if (has("return", "refund", "damage", "wrong", "exchange", "replace")) {
-        const r = policies.returns;
-        parts.push(
-            `RETURNS: Window: ${r.window} | ${r.eligibility} | Process: ${r.process} | Damaged: ${r.damagedItem}`
-        );
-    }
-
-    if (has("ship", "deliver", "how long", "fast", "free shipping", "arrive")) {
-        const sh = policies.shipping;
-        parts.push(
-            `SHIPPING: Standard: ${sh.standard.duration}, ${sh.standard.cost} | Express: ${sh.express.duration}, ${sh.express.cost} | Coverage: ${sh.coverage}`
-        );
-    }
-
-    if (has("track", "where", "status", "shipped", "out for delivery")) {
-        const t = orderTracking;
-        parts.push(
-            `TRACKING: ${t.howToTrack}\nStatuses: ${t.statuses.map((s) => `${s.status}=${s.meaning}`).join(" | ")}`
-        );
-    }
-
-    if (has("pay", "payment", "cod", "cash", "card", "jazz", "easypaisa", "online", "wallet")) {
-        const p = policies.payments;
-        parts.push(
-            `PAYMENTS: ${p.availableMethods.join(", ")} | COD: ${p.codDetails} | Security: ${p.security}`
-        );
-    }
-
-    if (has("cancel")) {
-        const c = policies.cancellation;
-        parts.push(`CANCELLATION: ${c.beforeShipment} | After shipping: ${c.afterShipment} | Refund: ${c.refundTimeline}`);
-    }
-
-    if (has("sell", "seller", "vendor", "register", "commission", "payout")) {
-        const s = sellerProgram;
-        parts.push(
-            `SELLER: Register: ${s.howToRegister} | Requirements: ${s.requirements.join(", ")} | Commission: ${s.commission} | Payouts: ${s.payoutSchedule}`
-        );
-    }
-
-    // Nothing topic-specific matched — fall back to FAQ only
-    if (parts.length === 1) {
-        parts.push("FAQ:\n" + faq.map((f) => `Q: ${f.question}\nA: ${f.answer}`).join("\n\n"));
-    }
-
-    return parts.join("\n\n");
 };
 
-const buildSystemPrompt = (context) =>
-    `You are ShopBot, the virtual assistant for ShopMart. Answer using ONLY the data below. If not in the data, say you don't have that info and give the support contact. Never answer off-topic questions. Be concise.\nIMPORTANT RULES:\n- All offers and products listed in the data are current and active today. Never say you don't know today's date — just present the listed offers as the current ones.\n- For comparison or "which is better" questions, present the relevant facts from the data clearly so the user can decide. Do not refuse to answer.\n- Always extract and use any relevant information from the DATA section below to answer the user.\n\nDATA:\n${context}`;
+// ─── Constants ────────────────────────────────────────────────────────────────
 
+const { supportAgent, phone, email, workingHours } = storeData.store.contact;
+
+const SYSTEM_PROMPT =
+    `You are ShopBot for ShopMart. ShopMart sells ONLY: Jeans, Bags, Glasses, T-Shirts, Shoes, Jackets, Suits. ` +
+    `RULES: 1) Always call a tool first — NEVER answer from memory or training data. ` +
+    `2) Use ONLY the exact data returned by the tool. Never add, change or invent any detail. ` +
+    `3) Never show tool names, JSON, or XML tags in your response — speak naturally. ` +
+    `4) For unknown products say we don't carry it. ` +
+    `Owner: ${supportAgent} | Phone: ${phone} | Email: ${email} | Hours: ${workingHours}.`;
 
 const BANNED_WORDS = ["sex", "politics", "violence", "religion"];
 
@@ -138,6 +140,8 @@ const QUESTIONS = [
     "What are the popular things on ShopMart?",
     "What payment methods does ShopMart accept?",
 ];
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 const CustomerSupport = () => {
     const [response, setResponse] = useState("");
@@ -157,7 +161,6 @@ const CustomerSupport = () => {
         setIsLoading(true);
 
         const apiKey = import.meta.env.VITE_GROQ_API_KEY;
-
         if (!apiKey) {
             setResponse("Error: API key is not configured.");
             setIsLoading(false);
@@ -165,7 +168,13 @@ const CustomerSupport = () => {
         }
 
         try {
-            const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            const messages = [
+                { role: "system", content: SYSTEM_PROMPT },
+                { role: "user", content: trimmed },
+            ];
+
+            // ── Pass 1: LLM decides which tools to call ──────────────────────
+            const res1 = await fetch("https://api.groq.com/openai/v1/chat/completions", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -173,26 +182,86 @@ const CustomerSupport = () => {
                 },
                 body: JSON.stringify({
                     model: "llama-3.1-8b-instant",
-                    max_tokens: 300,
-                    messages: [
-                        { role: "system", content: buildSystemPrompt(getContext(trimmed)) },
-                        { role: "user", content: trimmed },
-                    ],
+                    messages,
+                    tools: TOOLS,
+                    tool_choice: "auto",
                 }),
             });
 
-            const data = await res.json();
-
-            if (!res.ok) {
-                const msg = data?.error?.message || res.statusText;
-                console.error("Groq API error:", msg);
-                setResponse(`Error: ${msg}`);
+            const data1 = await res1.json();
+            if (!res1.ok) {
+                const errMsg = data1?.error?.message || res1.statusText;
+                if (errMsg.toLowerCase().includes("failed") || errMsg.toLowerCase().includes("function")) {
+                    const faqResult = executeTool("get_faq", {});
+                    const fallbackRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+                        body: JSON.stringify({
+                            model: "llama-3.1-8b-instant",
+                            max_tokens: 400,
+                            messages: [
+                                ...messages,
+                                { role: "assistant", content: null, tool_calls: [{ id: "fallback_faq", type: "function", function: { name: "get_faq", arguments: "{}" } }] },
+                                { role: "tool", tool_call_id: "fallback_faq", content: faqResult },
+                            ],
+                        }),
+                    });
+                    const fallbackData = await fallbackRes.json();
+                    setResponse(fallbackData?.choices?.[0]?.message?.content || "Sorry, I could not process your request. Please try again.");
+                    return;
+                }
+                setResponse(`Error: ${errMsg}`);
                 return;
             }
 
-            setResponse(data.choices[0].message.content);
+            let assistantMsg = data1.choices[0].message;
+
+            // No tool calls — return direct content, or force get_faq as fallback
+            if (!assistantMsg.tool_calls || assistantMsg.tool_calls.length === 0) {
+                if (assistantMsg.content) {
+                    setResponse(assistantMsg.content);
+                    return;
+                }
+                // LLM returned nothing — inject get_faq as fallback
+                assistantMsg = {
+                    role: "assistant",
+                    content: null,
+                    tool_calls: [{ id: "fallback_faq", type: "function", function: { name: "get_faq", arguments: "{}" } }],
+                };
+            }
+
+            // ── Execute each tool the LLM requested ──────────────────────────
+            const toolResults = assistantMsg.tool_calls.map((tc) => {
+                const args = JSON.parse(tc.function.arguments || "{}");
+                return {
+                    role: "tool",
+                    tool_call_id: tc.id,
+                    content: executeTool(tc.function.name, args),
+                };
+            });
+
+            // ── Pass 2: LLM generates final answer using tool results ─────────
+            const res2 = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${apiKey}`,
+                },
+                body: JSON.stringify({
+                    model: "llama-3.1-8b-instant",
+                    max_tokens: 400,
+                    messages: [...messages, assistantMsg, ...toolResults],
+                }),
+            });
+
+            const data2 = await res2.json();
+            if (!res2.ok) {
+                setResponse(`Error: ${data2?.error?.message || res2.statusText}`);
+                return;
+            }
+
+            setResponse(data2.choices[0].message.content);
         } catch (err) {
-            console.error("Groq API error:", err);
             setResponse(`Network error: ${err.message}. Check your connection and try again.`);
         } finally {
             setIsLoading(false);
@@ -211,7 +280,6 @@ const CustomerSupport = () => {
 
     return (
         <div className="min-h-screen text-gray-300 flex flex-col">
-            {/* Title */}
             <motion.div
                 initial={{ opacity: 0, y: -30 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -233,7 +301,6 @@ const CustomerSupport = () => {
             </motion.div>
 
             <main className="flex-grow container mx-auto px-4 pb-12 max-w-4xl">
-                {/* Search bar */}
                 <motion.form
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -265,7 +332,6 @@ const CustomerSupport = () => {
                     <p className="text-right text-xs text-gray-600 mt-1 pr-1">{query.length}/200</p>
                 </motion.form>
 
-                {/* Common questions */}
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -289,7 +355,6 @@ const CustomerSupport = () => {
                     </div>
                 </motion.div>
 
-                {/* Response area */}
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}

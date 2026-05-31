@@ -13,9 +13,9 @@
   "currentOffers": [
     {
       "title": "Summer Mega Sale",
-      "description": "Up to 50% off on electronics and home appliances",
-      "code": null,
-      "validUntil": "2024-12-31"
+      "description": "Up to 50% off on Jeans, Bags, Shoes, Jackets, Suits, T-Shirts, and Glasses",
+      "code": "SUMMER50",
+      "validUntil": "Ongoing"
     },
     {
       "title": "Friday Flash Deal",
@@ -44,30 +44,13 @@
   ],
 
   "categories": [
-    {
-      "name": "Electronics",
-      "topProducts": ["Smartphones", "Laptops", "Wireless Earbuds", "Smartwatches", "Power Banks", "Tablet"]
-    },
+   
     {
       "name": "Fashion",
       "topProducts": ["Men's Kurta", "Women's Lawn Suit", "Sneakers", "Handbags", "Sunglasses", "Watches"]
-    },
-    {
-      "name": "Home & Kitchen",
-      "topProducts": ["Cookware Sets", "Sofa Sets", "Bed Sheets", "Air Fryer", "Blender", "LED Lights"]
-    },
-    {
-      "name": "Beauty & Personal Care",
-      "topProducts": ["Skincare Kits", "Makeup Palettes", "Perfumes", "Hair Straighteners", "Face Wash"]
-    },
-    {
-      "name": "Sports & Outdoors",
-      "topProducts": ["Cricket Bat & Ball", "Dumbbells", "Yoga Mat", "Cycling Helmet", "Running Shoes"]
-    },
-    {
-      "name": "Books & Stationery",
-      "topProducts": ["MDCAT Prep Books", "Novel Collections", "Planners", "Art Supplies", "Pens & Markers"]
     }
+    
+   
   ],
 
   "policies": {
@@ -138,7 +121,7 @@
       "priceRange": "Rs. 1,200 – Rs. 5,500",
       "colors": ["Blue", "Black", "Grey", "White", "Dark Indigo", "Light Wash", "Distressed"],
       "careTips": "Machine wash cold with similar colors. Avoid bleach. Tumble dry low or hang dry to maintain shape.",
-      "buyingTips": "Check waist and length measurements before ordering. Stretch denim recommended for a comfortable everyday fit."
+      "buying Tips": "Check waist and length measurements before ordering. Stretch denim recommended for a comfortable everyday fit."
     },
     "bags": {
       "description": "ShopMart stocks a variety of bags including handbags, backpacks, tote bags, laptop bags, and travel bags.",
@@ -147,7 +130,7 @@
       "priceRange": "Rs. 800 – Rs. 12,000",
       "features": ["Multiple compartments", "Laptop sleeve (for laptop bags)", "Waterproof lining", "Adjustable straps", "Anti-theft zippers"],
       "careTips": "Wipe leather bags with a damp cloth. Store in dust bags when not in use. Avoid overloading to preserve shape.",
-      "buyingTips": "For laptop bags, check compartment size compatibility with your laptop size (13\", 15\", or 17\"). For daily use, a tote or crossbody is ideal."
+      "buying Tips": "For laptop bags, check compartment size compatibility with your laptop size (13\", 15\", or 17\"). For daily use, a tote or crossbody is ideal."
     },
     "glasses": {
       "description": "ShopMart offers sunglasses, reading glasses, and fashion eyewear for men, women, and kids.",
@@ -158,7 +141,7 @@
       "priceRange": "Rs. 500 – Rs. 6,000",
       "colors": ["Black", "Tortoise Shell", "Gold", "Silver", "Brown", "Transparent", "Multicolor"],
       "careTips": "Clean with a microfiber cloth only. Store in a hard case when not in use. Avoid placing lenses face-down.",
-      "buyingTips": "Look for UV400 or UV protection labels for sunglasses. Polarized lenses reduce glare and are great for driving or outdoor use."
+      "buying Tips": "Look for UV400 or UV protection labels for sunglasses. Polarized lenses reduce glare and are great for driving or outdoor use."
     },
     "tshirts": {
       "description": "ShopMart has a large collection of casual, graphic, polo, and plain t-shirts for men, women, and kids.",
@@ -172,7 +155,7 @@
       "priceRange": "Rs. 400 – Rs. 2,500",
       "colors": ["White", "Black", "Navy", "Grey", "Red", "Green", "Yellow", "Pastel Shades", "Multicolor Prints"],
       "careTips": "Machine wash cold. Dry in shade to prevent fading. Iron inside-out for printed tees.",
-      "buyingTips": "100% cotton is breathable and ideal for summer. Dry-fit fabric is best for workouts. Check size chart as cuts vary by brand."
+      "buying Tips": "100% cotton is breathable and ideal for summer. Dry-fit fabric is best for workouts. Check size chart as cuts vary by brand."
     },
     "shoes": {
       "description": "ShopMart offers footwear for all occasions including sneakers, formal shoes, sandals, heels, and sports shoes.",
@@ -185,7 +168,7 @@
       },
       "priceRange": "Rs. 700 – Rs. 9,000",
       "careTips": "Clean leather shoes with a damp cloth and condition regularly. Use shoe trees to maintain shape. Air out sports shoes after use.",
-      "buyingTips": "Measure both feet and order based on the larger foot. Shoe sizes can vary between brands — always check the size guide. For sports shoes, choose based on activity type (running, gym, outdoor)."
+      "buying Tips": "Measure both feet and order based on the larger foot. Shoe sizes can vary between brands — always check the size guide. For sports shoes, choose based on activity type (running, gym, outdoor)."
     },
     "jackets": {
       "description": "ShopMart stocks jackets for all seasons including windbreakers, hooded jackets, leather jackets, denim jackets, and winter puffer jackets.",
@@ -195,7 +178,7 @@
       "priceRange": "Rs. 1,500 – Rs. 15,000",
       "colors": ["Black", "Brown", "Navy", "Khaki", "Olive Green", "Grey", "Camel", "Maroon"],
       "careTips": "Leather jackets should be wiped clean and stored in breathable covers. Puffer jackets can be machine washed on gentle cycle. Hang jackets rather than folding to keep shape.",
-      "buyingTips": "For winter warmth, opt for puffer or fleece-lined jackets. Leather and denim jackets are great for styling. Check fill weight for puffers — higher fill means warmer jacket."
+      "buying Tips": "For winter warmth, opt for puffer or fleece-lined jackets. Leather and denim jackets are great for styling. Check fill weight for puffers — higher fill means warmer jacket."
     },
     "suits": {
       "description": "ShopMart offers formal suits, shalwar kameez suits, women's lawn suits, and wedding/occasion wear for men and women.",
@@ -219,14 +202,14 @@
         "womensEmbroidered": "Rs. 3,500 – Rs. 20,000"
       },
       "careTips": "Dry clean formal suits. Hand wash or gentle machine wash lawn suits. Steam iron embroidered areas carefully. Store in suit bags.",
-      "buyingTips": "For formal suits, measure chest, waist, and trouser inseam. Unstitched suits offer more customization through a local tailor. Look for lawn brands for spring/summer season."
+      "buying Tips": "For formal suits, measure chest, waist, and trouser inseam. Unstitched suits offer more customization through a local tailor. Look for lawn brands for spring/summer season."
     }
   },
 
   "faq": [
     {
       "question": "What are the best deals on ShopMart right now?",
-      "answer": "Right now, ShopMart is running a Summer Mega Sale with up to 50% off on electronics. Every Friday there is a 30% Fashion Flash Deal with code FRIDAY30. New users get 15% off their first order with code WELCOME15."
+      "answer": "Right now, ShopMart is running a Summer Mega Sale with up to 50% off. Every Friday there is a 30% Fashion Flash Deal with code FRIDAY30. New users get 15% off their first order with code WELCOME15."
     },
     {
       "question": "How do I track my order?",
@@ -262,7 +245,7 @@
     },
     {
       "question": "What are the most popular products?",
-      "answer": "Top-selling categories include Smartphones, Laptops, and Earbuds in Electronics; Lawn Suits and Sneakers in Fashion; and Cookware and Air Fryers in Home & Kitchen."
+      "answer": "Top-selling categories include are Jeans, Bags, Shoes, and Jackets ; Lawn Suits and Sneakers in Fashion."
     }
   ]
 }
