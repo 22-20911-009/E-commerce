@@ -38,95 +38,93 @@ A full-stack e-commerce platform built with the MERN stack, featuring Redis cach
 
 ## AI Agent Customer Support — ShopBot
 
-ShopBot is the core AI feature of this project. It is a context-aware customer support agent embedded in the storefront, capable of answering real questions about the store, products, and policies.
+ShopBot is the core AI feature of this project. It is a **tool-calling agent** embedded in the storefront that answers real questions about products, policies, offers, and store info using a two-pass LLM architecture.
+
+### Agent Type
+
+**Single Agent — Tool-Calling Architecture**
+
+The LLM decides which tools to call. JavaScript executes them. The LLM then writes the final answer from the tool results. The LLM never answers from its own training data.
 
 ### How It Works
 
 ```
-User question
+User Question
      │
      ▼
-getContext(query)          ← keyword-based context extractor
+Pass 1 — LLM reads query + 8 tool definitions
+     │    decides which tool(s) to call
+     ▼
+executeTool() — JavaScript fetches data from shopmart.json
      │
      ▼
-Dynamic system prompt      ← built from shopmart.json knowledge base
+Pass 2 — LLM reads tool results → writes natural response
      │
      ▼
-Groq API (llama-3.1-8b-instant)
-     │
-     ▼
-Streaming response rendered in chat UI
+Answer displayed to user
 ```
+
+> The LLM does NOT execute tools directly. JavaScript is the agent that runs them.
 
 ### Architecture
 
 **1. Knowledge Base (`Frontend/src/data/shopmart.json`)**
 
-The entire store's knowledge is encoded in a structured JSON file that ShopBot reads at runtime. It includes:
+All store data is stored in a structured JSON file. ShopBot never answers from the LLM's training data — every response is grounded in this file:
 
-- Store info (name, agent contact, phone, working hours)
-- Active promotions (Summer Mega Sale, Friday Flash Deal, Welcome Discount, Free Shipping, Bundle & Save)
-- Product catalog with detailed entries per item:
-  - Categories: Jeans, Bags, Glasses, T-shirts, Shoes, Jackets, Suits
-  - Each entry includes: description, types, materials, sizes, colors, price ranges, care tips, and buying tips
-- Policies: returns (7 days), shipping (3–5 days standard, 1–2 days express), payment methods (Card, COD, JazzCash, EasyPaisa, Bank Transfer), cancellations
-- Seller program: registration steps, commission structure (5–15%), payout cycle (14 days)
-- Order tracking status definitions
-- FAQ (10 common questions with answers)
+- `store.contact` — Owner (Ansa Abid), phone, email, working hours
+- `currentOffers` — Active promotions and discount codes
+- `productInfo` — 7 categories: Jeans, Bags, Glasses, T-Shirts, Shoes, Jackets, Suits. Each includes types, materials, sizes, colors, price range, care tips, buying tips
+- `policies` — Returns (7 days), shipping (standard 3–5 days, express 1–2 days), payments (COD, Card, JazzCash, EasyPaisa, Bank Transfer), cancellations
+- `sellerProgram` — Registration steps, commission (5–15%), payout cycle (14 days)
+- `orderTracking` — How to track + status definitions
+- `faq` — 10 common Q&A pairs (fallback)
 
-**2. Context Extraction (`getContext(query)` in `CustomerSupport.jsx`)**
+**2. Tools (8 Functions)**
 
-Rather than sending the entire knowledge base to the model on every call, ShopBot extracts only the relevant sections based on keywords detected in the user's query. For example:
+The LLM selects from these tools based on the user's question:
 
-- Query contains "return" → injects return policy
-- Query contains "shipping" → injects shipping policy
-- Query contains "jeans" or "bags" → injects matching product details
-- Query contains "offer" or "sale" → injects current promotions
-- No match → falls back to FAQ
+| Tool | Fetches From | Triggered By |
+|---|---|---|
+| `get_offers` | `currentOffers` | "sale", "discount", "offer", "deal" |
+| `get_categories` | Hardcoded list | "what do you have", "popular" |
+| `get_product_info(category)` | `productInfo[category]` | "jeans", "bags", "shoes", etc. |
+| `get_policy(type)` | `policies[type]` | "return", "ship", "pay", "cancel" |
+| `get_order_tracking` | `orderTracking` | "track", "where is my order" |
+| `get_seller_info` | `sellerProgram` | "sell", "become a seller" |
+| `get_store_contact` | `store.contact` | "owner", "contact", "hours" |
+| `get_faq` | `faq` | Fallback for unmatched questions |
 
-This keeps token usage low while keeping answers accurate and grounded.
-
-**3. System Prompt Construction**
-
-A structured system prompt is assembled dynamically:
-
-```
-You are ShopBot, a friendly and professional customer support agent for [Store Name].
-Use only the following store data to answer questions. Do not make up information.
-
-[context block extracted from shopmart.json]
-
-Rules:
-- Treat listed offers as current
-- Answer product comparisons by presenting facts
-- For anything outside your knowledge, provide the support contact
-```
-
-**4. Groq API Call**
+**3. Two-Pass LLM Loop**
 
 ```js
-POST https://api.groq.com/openai/v1/chat/completions
+// Pass 1 — tool selection
+POST /openai/v1/chat/completions
+{ model: "llama-3.1-8b-instant", messages, tools: TOOLS, tool_choice: "auto" }
 
-{
-  model: "llama-3.1-8b-instant",
-  messages: [
-    { role: "system", content: dynamicSystemPrompt },
-    { role: "user",   content: userMessage }
-  ],
-  max_tokens: 300
-}
+// JavaScript executes the tool
+const result = executeTool(toolName, args)   // reads shopmart.json
+
+// Pass 2 — final answer
+POST /openai/v1/chat/completions
+{ model: "llama-3.1-8b-instant", messages: [...messages, assistantMsg, toolResult] }
 ```
 
-Authorization via `VITE_GROQ_API_KEY` set in `Frontend/.env`.
+**4. Agent Rules (System Prompt)**
+
+- ShopMart sells ONLY 7 categories — any other product gets a polite redirect
+- Always call a tool first — never answer from training data
+- Use only the exact data returned by tools — no invented product names or details
+- Never expose tool names, JSON, or XML tags in responses
 
 **5. Safety & UX**
 
 - Input capped at 200 characters
 - Content filter blocks off-topic queries (politics, violence, etc.)
 - 4 pre-built quick-question buttons for common topics
+- Programmatic `get_faq` fallback when LLM returns no tool call
 - Framer Motion spinner while awaiting response
 - Dark theme UI with emerald/teal accents
-- Floating chat icon in bottom-right corner for persistent access
 
 ### ShopBot UI
 
