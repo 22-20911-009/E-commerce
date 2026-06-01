@@ -88,6 +88,14 @@ const TOOLS = [
             parameters: { type: "object", properties: {} },
         },
     },
+    {
+        type: "function",
+        function: {
+            name: "request_human_agent",
+            description: "Call this when the user asks about a specific order status, order tracking by ID, missing order, payment failure, refund status, account issues, or anything that requires access to customer account data. This connects the user to a human agent.",
+            parameters: { type: "object", properties: {} },
+        },
+    },
 ];
 
 // ─── Tool Executor (runs the tool the LLM requested) ─────────────────────────
@@ -115,6 +123,8 @@ const executeTool = (name, args) => {
             return JSON.stringify(storeData.faq);
         case "get_store_contact":
             return JSON.stringify(storeData.store.contact);
+        case "request_human_agent":
+            return "HUMAN_HANDOFF";
         default:
             return "Tool not found";
     }
@@ -143,10 +153,13 @@ const QUESTIONS = [
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
+const MAX_HISTORY_TURNS = 4; // keep last 4 turns (8 messages) to stay within token limits
+
 const CustomerSupport = () => {
     const [response, setResponse] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [query, setQuery] = useState("");
+    const [history, setHistory] = useState([]); // session memory
 
     const handleSubmit = async (userQuery) => {
         const trimmed = userQuery.trim();
@@ -167,9 +180,13 @@ const CustomerSupport = () => {
             return;
         }
 
+        // keep only last MAX_HISTORY_TURNS turns (each turn = user + assistant = 2 messages)
+        const trimmedHistory = history.slice(-(MAX_HISTORY_TURNS * 2));
+
         try {
             const messages = [
                 { role: "system", content: SYSTEM_PROMPT },
+                ...trimmedHistory,
                 { role: "user", content: trimmed },
             ];
 
@@ -240,6 +257,20 @@ const CustomerSupport = () => {
                 };
             });
 
+            // ── Human handoff — skip Pass 2 and show contact directly ────────
+            if (toolResults.some((r) => r.content === "HUMAN_HANDOFF")) {
+                const handoffMsg =
+                    `I cannot help with this directly as it requires access to your personal account or order details.\n\n` +
+                    `Let me connect you to a human agent:\n\n` +
+                    `Agent: ${supportAgent}\n` +
+                    `Phone: ${phone}\n` +
+                    `Email: ${email}\n` +
+                    `Working Hours: ${workingHours}`;
+                setResponse(handoffMsg);
+                setHistory((prev) => [...prev, { role: "user", content: trimmed }, { role: "assistant", content: handoffMsg }]);
+                return;
+            }
+
             // ── Pass 2: LLM generates final answer using tool results ─────────
             const res2 = await fetch("https://api.groq.com/openai/v1/chat/completions", {
                 method: "POST",
@@ -260,7 +291,9 @@ const CustomerSupport = () => {
                 return;
             }
 
-            setResponse(data2.choices[0].message.content);
+            const finalAnswer = data2.choices[0].message.content;
+            setResponse(finalAnswer);
+            setHistory((prev) => [...prev, { role: "user", content: trimmed }, { role: "assistant", content: finalAnswer }]);
         } catch (err) {
             setResponse(`Network error: ${err.message}. Check your connection and try again.`);
         } finally {
@@ -298,6 +331,14 @@ const CustomerSupport = () => {
                     <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
                     Powered by Groq AI · ShopBot
                 </p>
+                {history.length > 0 && (
+                    <button
+                        onClick={() => { setHistory([]); setResponse(""); }}
+                        className="mt-3 text-xs text-gray-500 hover:text-emerald-400 underline transition-colors"
+                    >
+                        Clear chat history
+                    </button>
+                )}
             </motion.div>
 
             <main className="flex-grow container mx-auto px-4 pb-12 max-w-4xl">
